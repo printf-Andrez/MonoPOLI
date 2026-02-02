@@ -1,20 +1,24 @@
 class Jugador:
-    def __init__(self, nombre, id_jugador, nodo_inicial):
+    def __init__(self, nombre, id, casilla_inicio):
         self.nombre = nombre
-        self.id_jugador = id_jugador
+        self.id = id
+        self.casilla_actual = casilla_inicio
         self.vida = 40
-        self.vida_max = 40
-        self.casilla_actual = nodo_inicial
-        self.ganador = False
-    def mover (self, num_casillas):
-        for cont in range(num_casillas):
+        self.vueltas = 0  # Atributo para el límite de 15 vueltas
+
+    def mover(self, pasos):
+        """Mueve al jugador y detecta si completa una vuelta al pasar por el ID 0"""
+        for _ in range(pasos):
             self.casilla_actual = self.casilla_actual.siguiente
-    def modificar_vida (self, cantidad_vida):
-        self.vida += cantidad_vida
-        if self.vida > self.vida_max:
-            self.vida = self.vida_max
-        if self.vida < 0:
-            self.vida = 0
-    def __str__(self):
-        return f"{self.nombre} (Nota: {self.vida}) en casilla: {self.casilla_actual.nombre}"
+            if self.casilla_actual.id == 0:
+                self.vueltas += 1
+                print(f"{self.nombre} ha completado la vuelta {self.vueltas}/15!")
+
+    def modificar_vida(self, cantidad):
+        """Cambia el puntaje y avisa claramente en consola"""
+        self.vida += cantidad
+        simbolo = "☑" if cantidad > 0 else "☒"
+        estado = "GANADO" if cantidad > 0 else "PERDIDO"
+        print(f"{simbolo} [SISTEMA]: {self.nombre} ha {estado} {abs(cantidad)} puntos.")
+        print(f"Nota actual de {self.nombre}: {self.vida} / 70")
     
