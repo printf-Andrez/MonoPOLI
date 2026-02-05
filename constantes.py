@@ -25,6 +25,7 @@ DORADO_CASILLA = (245, 158, 11)     # Dorado (Minijuegos)
 ROJO_PELIGRO = (220, 38, 38)        # Rojo (Casilla Peligro/Tumbas)
 BORDE_TABLERO = (203, 213, 225)     # Gris para las líneas de conexión
 COLOR_BRILLO = (255, 255, 255)      # Brillo exterior de casillas
+CELESTE_CLARO = (0, 180, 255)
 
 # --- COLORES DE JUGADORES ---
 COLOR_JUGADOR_1 = (200, 50, 50)     # Rojo
@@ -35,7 +36,7 @@ VERDE_EXITO = (16, 185, 129)
 AZUL_BOTON = (59, 130, 246)
 AZUL_HOVER = (37, 99, 235)
 GRIS_TEXTO_SECUNDARIO = (100, 100, 100)
-COLOR_BOTON_JUGAR = (0, 150, 0)
+COLOR_BOTON_JUGAR = CELESTE_CLARO
 
 # --- RUTAS DE ARCHIVOS ---
 
