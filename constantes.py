@@ -39,16 +39,16 @@ COLOR_BOTON_JUGAR = (0, 150, 0)
 
 # --- RUTAS DE ARCHIVOS ---
 
-RUTA_PORTADA = 'BorisPortada.png'
-RUTA_FICHA_J1 = "ficha1.png"  
-RUTA_FICHA_J2 = "ficha2.png"
+RUTA_PORTADA = 'ElementosGraficos/BorisPortada.png'
+RUTA_FICHA_J1 = "ElementosGraficos/ficha1.png"  
+RUTA_FICHA_J2 = "ElementosGraficos/ficha2.png"
 ARCHIVO_LOG = "historial_partida.txt"
-RUTA_FONDO_JUEGO = "fondo_juego.jpg"
-RUTA_EVIL_BORIS = "evilBoris.png"
-RUTA_GOOD_BORIS = "goodBoris.png"
-RUTA_MUSICA = "soundtrack.mp3"
-RUTA_SONIDO_ERROR = "error.mp3"
-RUTA_FONDO_VICTORIA = "victoria_fondo.jpg"
+RUTA_FONDO_JUEGO = "ElementosGraficos/fondo_juego.jpg"
+RUTA_EVIL_BORIS = "ElementosGraficos/evilBoris.png"
+RUTA_GOOD_BORIS = "ElementosGraficos/goodBoris.png"
+RUTA_MUSICA = "EfectosDeSonido/soundtrack.mp3"
+RUTA_SONIDO_ERROR = "EfectosDeSonido/error.mp3"
+RUTA_FONDO_VICTORIA = "ElementosGraficos/victoria_fondo.jpg"
 
 # --- CONSTANTES DE MINIJUEGOS  ---
 ARCHIVO_LOG_MINIJUEGOS = "historial_minijuegos.txt"
