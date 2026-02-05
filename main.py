@@ -3,62 +3,100 @@ import sys
 from estructuras import Tablero
 from entidades import Jugador
 from minijuegos import Minijuegos
-
-# --- CONFIGURACIÓN INICIAL ---
-ANCHO, ALTO = 1000, 800 
-MARGEN_TABLERO = 120      # Espacio para que el título quepa arriba
-COLOR_FONDO = (240, 244, 248) # Gris azulado muy claro (estilo aplicación)
-AZUL_CASILLA = (59, 130, 246)    # Azul vibrante (estilo Tailwind)
-DORADO_CASILLA = (245, 158, 11)  # Naranja/Dorado elegante
-COLOR_LINEA = (100, 100, 100)
-BORDE_TABLERO = (203, 213, 225)  # Gris para las líneas de conexión
-COLOR_TEXTO = (30, 41, 59)       # Azul oscuro casi negro para legibilidad
-COLOR_JUGADOR_1 = (200, 50, 50) # Rojo
-COLOR_JUGADOR_2 = (50, 200, 50) # Verde
-
-# Inicializar Pygame
-pygame.init()
-pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("MonoPOLI - Bori's Version")
-fuente = pygame.font.SysFont("Arial", 16)
-fuente_grande = pygame.font.SysFont("Arial", 24, bold=True)
-fuente_titulo = pygame.font.SysFont("Arial", 36, bold=True)
-fuente_pequena = pygame.font.SysFont("Arial", 14)
+from constantes import *
 
 class JuegoGrafico:
     def __init__(self):
         pygame.init() #Aseguramos que se inicie
-        self.pantalla = pygame.display.set_mode((1000, 800))
+        self.pantalla = pygame.display.set_mode((ANCHO, ALTO))
+        pygame.display.set_caption(TITULO_VENTANA)
+
+        try:
+            icono = pygame.image.load(RUTA_FICHA_J1)
+            pygame.display.set_icon(icono)
+        except Exception as e:
+            print(f"No se pudo cargar el icono: {e}")
+        
+        self.reloj = pygame.time.Clock()
+
+        self.fuente = pygame.font.SysFont("Arial", 16)
+        self.fuente_grande = pygame.font.SysFont("Arial", 24, bold=True)
+        self.fuente_titulo = pygame.font.SysFont("Arial", 36, bold=True)
+        self.fuente_pequena = pygame.font.SysFont("Arial", 14)
+        self.fuente_gigante = pygame.font.SysFont("Arial", 70, bold=True)
+        self.img_evil_boris = None
+        self.img_good_boris = None
+        
+        try:
+            print("Cargando música de fondo...")
+            pygame.mixer.music.load(RUTA_MUSICA)       # 1. Cargar el archivo
+            pygame.mixer.music.set_volume(VOLUMEN_MUSICA) # 2. Ajustar volumen
+            pygame.mixer.music.play(-1)                # 3. Reproducir en bucle infinito (-1)
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo cargar la música '{RUTA_MUSICA}'. Error: {e}")
+
+        self.sonido_error = None
+        try:
+            self.sonido_error = pygame.mixer.Sound(RUTA_SONIDO_ERROR)
+            self.sonido_error.set_volume(0.4) 
+        except Exception as e:
+            print(f"No se pudo cargar el sonido de error: {e}")
+
+        try:
+            img_temp = pygame.image.load(RUTA_GOOD_BORIS).convert_alpha()
+            # Escalamos igual que la otra (ej. 180x180)
+            self.img_good_boris = pygame.transform.scale(img_temp, (180, 180))
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo cargar {RUTA_GOOD_BORIS}. Error: {e}")
+
+        try:
+            # Convert alpha es importante si el PNG tiene transparencia
+            img_temp = pygame.image.load(RUTA_EVIL_BORIS).convert_alpha()
+            # Escalamos la imagen a un tamaño que quepa bien en la ventana modal (ej. 180x180)
+            self.img_evil_boris = pygame.transform.scale(img_temp, (180, 180))
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo cargar {RUTA_EVIL_BORIS}. El juego continuará sin ella. Error: {e}")
+
+        try:
+            print("Cargando imagen de fondo del tablero...")
+            # 1. Cargar la imagen. .convert() es crucial para la velocidad en fondos sin transparencia
+            img_temp = pygame.image.load(RUTA_FONDO_JUEGO).convert()
+            # 2. Escalarla al tamaño exacto de la ventana (ANCHO, ALTO están en constantes)
+            self.fondo_tablero = pygame.transform.scale(img_temp, (ANCHO, ALTO))
+            # 3. Marcamos que la carga fue exitosa
+            self.usar_imagen_fondo = True
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo cargar '{RUTA_FONDO_JUEGO}'. Usando color sólido. Error: {e}")
+            # Si falla, marcamos como falso y el juego usará COLOR_FONDO
+            self.usar_imagen_fondo = False
 
         self.tablero = Tablero()
         self.generar_mapa_cuadrado()
         self.jugadores = [
-            Jugador("DonLuis", 1, self.tablero.inicio),
-            Jugador("Miguel", 2, self.tablero.inicio)
+            Jugador("Jugador1", 1, self.tablero.inicio, RUTA_FICHA_J1),
+            Jugador("Jugador2", 2, self.tablero.inicio, RUTA_FICHA_J2)
         ]
 
         self.tumbas = []
         self.turno_actual = 0
         self.corriendo = True
-        
         # DEFINIR EL ARCHIVO DE LOG
-        self.archivo_log = "historial_partida.txt"
+        self.archivo_log = ARCHIVO_LOG
 
         # Forzamos la vida inicial a 40 para el semestre
         for j in self.jugadores:
             j.vida = 40
             
-        self.minijuegos = Minijuegos()
-        self.turno_actual = 0
+        self.minijuegos = Minijuegos(self.img_evil_boris, self.img_good_boris, self.sonido_error)
         self.jugando = True  
 
     def mostrar_pantalla_inicio(self):
         try:
-            fondo = pygame.image.load('Portada (1).png').convert()
-            fondo = pygame.transform.scale(fondo, (1000, 800)) # tamaño de la pantalla
+            fondo = pygame.image.load(RUTA_PORTADA).convert()
+            fondo = pygame.transform.scale(fondo, (ANCHO, ALTO)) # tamaño de la pantalla
         except pygame.error as e:
             print(f"Error al cargar la imagen de fondo: {e}")
-            fondo = pygame.Surface((1000, 800))
+            fondo = pygame.Surface((ANCHO, ALTO))
             fondo.fill((40, 40, 40)) 
         
         # Fuente para el botón y el título
@@ -66,18 +104,20 @@ class JuegoGrafico:
         fuente_boton = pygame.font.SysFont("Arial", 40, bold=True)
         
         # Colores
-        COLOR_BOTON = (0, 150, 0) # Verde
-        COLOR_TEXTO_BOTON = (255, 255, 255) # Blanco
+        COLOR_BOTON = COLOR_BOTON_JUGAR
+        COLOR_TEXTO_BOTON = BLANCO 
         
         # Rectángulo para el botón "Jugar"
-        rect_boton = pygame.Rect(400, 600, 200, 70) # x, y, ancho, alto
+        rect_boton = pygame.Rect(ANCHO //2 - 100, 600, 200, 70) # x, y, ancho, alto
 
         esperando_inicio = True
         while esperando_inicio:
+            #Controlar FPS
+            self.reloj.tick(FPS)
+
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
                     pygame.quit()
-                    import sys
                     sys.exit()
                 if evento.type == pygame.MOUSEBUTTONDOWN:
                     if rect_boton.collidepoint(evento.pos):
@@ -94,8 +134,8 @@ class JuegoGrafico:
             pygame.display.flip()
 
     def generar_mapa_cuadrado(self):
-        margen_x, margen_y = 150, 150
-        ancho_util = ANCHO - (margen_x * 2)
+        # margen_x, margen_y = 150, 150
+        ancho_util = ANCHO - (MARGEN_X * 2)
         alto_util = ALTO - 350
         
         # Posiciones de los "Exámenes" (Minijuegos) en las casillas 
@@ -108,19 +148,19 @@ class JuegoGrafico:
         puntos = []
         
         for i in range(4):
-            puntos.append((margen_x + i * (ancho_util // 3), margen_y))
+            puntos.append((MARGEN_X + i * (ancho_util // 3), MARGEN_Y))
         
         # Derecha (2 casillas: 4, 5)
         for i in range(1, 3):
-            puntos.append((ANCHO - margen_x, margen_y + i * (alto_util // 3)))
+            puntos.append((ANCHO - MARGEN_X, MARGEN_Y + i * (alto_util // 3)))
             
         # Inferior (4 casillas: 6, 7, 8, 9) en reversa
         for i in range(4):
-            puntos.append((ANCHO - margen_x - i * (ancho_util // 3), margen_y + alto_util))
+            puntos.append((ANCHO - MARGEN_X - i * (ancho_util // 3), MARGEN_Y + alto_util))
             
         # Izquierda (2 casillas: 10, 11) en reversa
         for i in range(1, 3):
-            puntos.append((margen_x, margen_y + alto_util - i * (alto_util // 3)))
+            puntos.append((MARGEN_X, MARGEN_Y + alto_util - i * (alto_util // 3)))
 
         # Crear las casillas físicamente en el tablero
         for i, (px, py) in enumerate(puntos):
@@ -141,7 +181,7 @@ class JuegoGrafico:
         actual = self.tablero.inicio
         for _ in range(self.tablero.tamano):
             sig = actual.siguiente
-            pygame.draw.line(pantalla, BORDE_TABLERO, (actual.x, actual.y), (sig.x, sig.y), 4)
+            pygame.draw.line(self.pantalla, BORDE_TABLERO, (actual.x, actual.y), (sig.x, sig.y), 4)
             actual = sig
 
         # Dibujar círculos con borde
@@ -149,26 +189,26 @@ class JuegoGrafico:
         for _ in range(self.tablero.tamano):
             # Color según el tipo
             if actual.tipo == "Minijuego":
-                color = (245, 158, 11) # Dorado
+                color = DORADO_CASILLA # Dorado
             elif actual.tipo == "Peligro":
-                color = (220, 38, 38)  # Rojo 
+                color = ROJO_PELIGRO  # Rojo 
             else:
-                color = (59, 130, 246) # Azul
+                color = AZUL_CASILLA # Azul
             
             # Sombra/Borde para dar profundidad
-            pygame.draw.circle(pantalla, (255, 255, 255), (actual.x, actual.y), 28) # Brillo exterior
-            pygame.draw.circle(pantalla, color, (actual.x, actual.y), 25)           # Casilla
-            pygame.draw.circle(pantalla, (0, 0, 0), (actual.x, actual.y), 25, 2)    # Contorno
+            pygame.draw.circle(self.pantalla, COLOR_BRILLO, (actual.x, actual.y), RADIO_NODO + 3) # Brillo exterior
+            pygame.draw.circle(self.pantalla, color, (actual.x, actual.y), RADIO_NODO)           # Casilla
+            pygame.draw.circle(self.pantalla, NEGRO, (actual.x, actual.y), RADIO_NODO, 2)    # Contorno
             
             # ID de la casilla
-            id_txt = fuente_pequena.render(str(actual.id), True, (255, 255, 255))
-            pantalla.blit(id_txt, (actual.x - id_txt.get_width()//2, actual.y - id_txt.get_height()//2))
+            id_txt = self.fuente_pequena.render(str(actual.id), True, BLANCO)
+            self.pantalla.blit(id_txt, (actual.x - id_txt.get_width()//2, actual.y - id_txt.get_height()//2))
             actual = actual.siguiente
 
         # DIBUJAR TUMBAS DE REPROBADOS
         for tx, ty in self.tumbas:
-            pygame.draw.circle(self.pantalla, (50, 50, 50), (tx, ty), 15)
-            
+            pygame.draw.circle(self.pantalla, COLOR_TEXTO, (tx, ty), 15)
+            #miau acá abajo
             fuente_tumba = pygame.font.SysFont("Arial", 20, bold=True)
             txt_x = fuente_tumba.render("X", True, (200, 200, 200))
             self.pantalla.blit(txt_x, (tx - txt_x.get_width()//2, ty - txt_x.get_height()//2))
@@ -179,69 +219,84 @@ class JuegoGrafico:
             pos_x = jug.casilla_actual.x + (i * 15 - 7) 
             pos_y = jug.casilla_actual.y - 30 
             
-            color_ficha = (239, 68, 68) if i == 0 else (34, 197, 94) # Rojo y Verde vibrantes
-            pygame.draw.circle(pantalla, color_ficha, (pos_x, pos_y), 12)
-            pygame.draw.circle(pantalla, (0, 0, 0), (pos_x, pos_y), 12, 2)
+            x_img = pos_x - (TAMANO_FICHA // 2)
+            y_img = pos_y - (TAMANO_FICHA // 2)
+
+            if hasattr(jug, 'imagen'):
+                self.pantalla.blit(jug.imagen, (x_img, y_img))
+            else:
+                color_ficha = COLOR_JUGADOR_1 if i == 0 else COLOR_JUGADOR_2
+                pygame.draw.circle(self.pantalla, color_ficha, (pos_x, pos_y), RADIO_FICHA)
+                pygame.draw.circle(self.pantalla, (0, 0, 0), (pos_x, pos_y), RADIO_FICHA, 2)
 
     def dibujar_interfaz(self):
-        # 1. Título
-        titulo_surf = fuente_titulo.render("MonoPOLI: La Aventura de Algoritmos", True, (40, 40, 40))
-        # Lo ponemos a 10 píxeles del borde superior
-        pantalla.blit(titulo_surf, (ANCHO // 2 - titulo_surf.get_width() // 2, 10))
-
-        # 2. Dado
+        
         if hasattr(self, 'ultimo_valor_dado'):
             rect_dado = pygame.Rect(ANCHO // 2 - 50, ALTO // 2 - 50, 100, 100)
             
             # Sombra del dado
-            pygame.draw.rect(pantalla, (200, 200, 200), rect_dado.move(4, 4), border_radius=15)
+            pygame.draw.rect(self.pantalla, BORDE_TABLERO, rect_dado.move(4, 4), border_radius=15) #OJO 200 200 200
             # Cuerpo del dado
-            pygame.draw.rect(pantalla, (255, 255, 255), rect_dado, border_radius=15)
+            pygame.draw.rect(self.pantalla, BLANCO, rect_dado, border_radius=15)
             
             # Color del borde y número según el turno actual
-            color_turno = (34, 197, 94) if self.turno_actual == 0 else (239, 68, 68) # Rojo o Verde
-            pygame.draw.rect(pantalla, color_turno, rect_dado, 4, border_radius=15)
+            color_turno = COLOR_JUGADOR_1 if self.turno_actual == 0 else COLOR_JUGADOR_2 # Rojo o Verde
+            pygame.draw.rect(self.pantalla, color_turno, rect_dado, 4, border_radius=15)
             
             # Dibujar el número
-            val_txt = fuente_titulo.render(str(self.ultimo_valor_dado), True, color_turno)
+            val_txt = self.fuente_titulo.render(str(self.ultimo_valor_dado), True, color_turno)
             pos_x = ANCHO // 2 - val_txt.get_width() // 2
             pos_y = ALTO // 2 - val_txt.get_height() // 2
-            pantalla.blit(val_txt, (pos_x, pos_y))
+            self.pantalla.blit(val_txt, (pos_x, pos_y))
             
             # Texto pequeño que dice "DADO"
-            txt_dado = fuente_pequena.render("DADO", True, (100, 100, 100))
-            pantalla.blit(txt_dado, (ANCHO // 2 - txt_dado.get_width() // 2, ALTO // 2 + 55))
+            txt_dado = self.fuente_pequena.render("DADO", True, GRIS_TEXTO_SECUNDARIO) #pilas es 100 100 100
+            self.pantalla.blit(txt_dado, (ANCHO // 2 - txt_dado.get_width() // 2, ALTO // 2 + 55))
 
         # 3. PANEL INFERIOR 
-        pygame.draw.rect(pantalla, (255, 255, 255), (0, ALTO - 120, ANCHO, 120))
-        pygame.draw.line(pantalla, (200, 200, 200), (0, ALTO - 120), (ANCHO, ALTO - 120), 2)
+        pygame.draw.rect(self.pantalla, BLANCO, (0, ALTO - 120, ANCHO, 120))
+        pygame.draw.line(self.pantalla, BORDE_TABLERO, (0, ALTO - 120), (ANCHO, ALTO - 120), 2) #pilas es 200 200 200
 
         # 4. ESTADO DEL JUGADOR (Izquierda)
-        jugador_activo = self.jugadores[self.turno_actual]
-        info_txt = f"Turno de: {jugador_activo.nombre} | Nota: {jugador_activo.vida}"
-        txt_render = fuente_grande.render(info_txt, True, (33, 150, 243))
-        pantalla.blit(txt_render, (50, ALTO - 75))
-
-        # 5. CONTADOR DE VUELTAS (Arriba a la derecha)
-        for i, jug in enumerate(self.jugadores):
-            txt_v = fuente_pequena.render(f"Meta {jug.nombre}: {jug.vueltas}/1 Vuelta", True, (80, 80, 80))
-            pantalla.blit(txt_v, (ANCHO - 180, 20 + i*20))
+        if self.jugadores:
+            jugador_activo = self.jugadores[self.turno_actual]
+            info_txt = f"Turno de: {jugador_activo.nombre} | Nota: {jugador_activo.vida}"
+            txt_render = self.fuente_grande.render(info_txt, True, AZUL_CASILLA)
+            self.pantalla.blit(txt_render, (50, ALTO - 75))
+        else:
+            txt_fin = self.fuente_grande.render("¡SEMESTRE TERMINADO!", True, ROJO_PELIGRO)
+            self.pantalla.blit(txt_fin, (50, ALTO - 75))
 
         # 6. INSTRUCCIONES (A la derecha en el panel inferior)
-        x_inst = 600
+        x_inst = 800
         inst_lineas = [
             "Instrucciones:", 
                                "- [ESPACIO]: Lanzar dado.",
                                "- Casilla Dorada: Minijuego.",
-                               "- Casiila Roda: Pregunta Bonus."
+                               "- Casiila Roja: Pregunta Bonus."
                                "- Gana en dar primero una vuelta."
                                
         ]
         for i, linea in enumerate(inst_lineas):
-            f = fuente_grande if i == 0 else fuente_pequena
-            color = (0,0,0) if i == 0 else (100, 100, 100)
+            f = self.fuente_grande if i == 0 else self.fuente_pequena
+            color = NEGRO if i == 0 else GRIS_TEXTO_SECUNDARIO
             texto = f.render(linea, True, color)
-            pantalla.blit(texto, (x_inst, ALTO - 110 + (i * 22)))
+            self.pantalla.blit(texto, (x_inst, ALTO - 110 + (i * 22)))
+    def actualizar_pantalla_completa(self):
+        """Método auxiliar para dibujar todo el escenario (Fondo + Tablero + Jugadores + Interfaz)"""
+        # 1. DIBUJAR FONDO (Imagen o Color)
+        if self.usar_imagen_fondo:
+            self.pantalla.blit(self.fondo_tablero, (0, 0))
+        else:
+            self.pantalla.fill(COLOR_FONDO)
+            
+        # 2. DIBUJAR ELEMENTOS DEL JUEGO
+        self.dibujar_tablero()
+        self.dibujar_jugadores()
+        self.dibujar_interfaz()
+        
+        # 3. MOSTRAR CAMBIOS
+        pygame.display.flip()
 
     def mover_jugador(self):
         import random
@@ -261,11 +316,7 @@ class JuegoGrafico:
         jugador.mover(valor_lanzado)
 
         # ANTES de que el input() de la trivia detenga el programa.
-        pantalla.fill(COLOR_FONDO)
-        self.dibujar_tablero()
-        self.dibujar_jugadores()
-        self.dibujar_interfaz()
-        pygame.display.flip() # 
+        self.actualizar_pantalla_completa()
         
         # 3. LÓGICA DE CASILLA ESPECIAL
         casilla_final = jugador.casilla_actual 
@@ -274,18 +325,18 @@ class JuegoGrafico:
 
         if tipo_detectado == "Minijuego":
             time.sleep(0.5) 
-            print(f" ¡MINIJUEGO ACTIVADO!")
+            print(f" Minijuego Iniciado")
             opcion = random.choice(["Trivia", "Dado"])
             
             if opcion == "Trivia":
-                self.minijuegos.jugar_trivia(jugador, pantalla) 
+                self.minijuegos.jugar_trivia(jugador, self.pantalla) 
             else:
-                self.minijuegos.lanzar_dado(jugador, pantalla)
+                self.minijuegos.lanzar_dado(jugador, self.pantalla)
 
         elif tipo_detectado == "Peligro": 
             time.sleep(0.5)
-            print(f" ¡CASILLA DE PELIGRO ACTIVADA!")
-            self.minijuegos.reto_peligro(jugador, pantalla)
+            print(f" Casilla de Peligro Activada")
+            self.minijuegos.reto_peligro(jugador, self.pantalla)
             
         else:
             print(f"Casilla normal. Saltando lógica de minijuego.")
@@ -301,16 +352,17 @@ class JuegoGrafico:
             # 1. Efecto de parpadeo y espera activa
             for i in range(6):  # Parpadeará 3 veces (rojo/oscuro)
                 # Alternar colores entre rojo oscuro y casi negro
-                color = (150, 0, 0) if i % 2 == 0 else (30, 0, 0)
-                pantalla.fill(color)
+                color = ROJO_PELIGRO if i % 2 == 0 else NEGRO
+                self.pantalla.fill(color)
                 
-                fuente_derrota = pygame.font.SysFont("Arial", 50, bold=True)
-                txt = fuente_derrota.render(f"¡{nombre_reprobado} REPROBÓ!", True, (255, 255, 255))
-                sub_txt = fuente_derrota.render("Saliendo del sistema...", True, (200, 200, 200))
+                # PILAS fuente_derrota = pygame.font.SysFont("Arial", 50, bold=True)
+
+                txt = self.fuente_gigante.render(f"¡{nombre_reprobado} fue reprobado por BORIS", True, BLANCO)
+                sub_txt = self.fuente_grande.render("Dirigiéndolo a segunda..", True, GRIS_TEXTO_SECUNDARIO)
                 
                 # Dibujar textos
-                pantalla.blit(txt, (pantalla.get_width()//2 - txt.get_width()//2, pantalla.get_height()//2 - 60))
-                pantalla.blit(sub_txt, (pantalla.get_width()//2 - sub_txt.get_width()//2, pantalla.get_height()//2 + 20))
+                self.pantalla.blit(txt, (ANCHO//2 - txt.get_width()//2, ALTO//2 - 60)) #self.pantalla.get_width()//2 - txt.get_width()//2
+                self.pantalla.blit(sub_txt, (ANCHO//2 - sub_txt.get_width()//2, ALTO//2 + 20))
                 
                 pygame.display.flip()
                 
@@ -320,6 +372,7 @@ class JuegoGrafico:
                     for evento in pygame.event.get():
                         if evento.type == pygame.QUIT:
                             pygame.quit()
+                            sys.exit() #PILAS
                             return
                 
             # 2. Quitar al jugador de la lista
@@ -327,25 +380,24 @@ class JuegoGrafico:
 
             # 3. Verificar si no quedan jugadores
             if len(self.jugadores) == 0:
-                print("Todos han reprobado. Fin del semestre.")
-                self.corriendo = False
+                print("Nadie escapó de BORIS. El semestre termina sin ganadores.")
+                self.jugando = False #self.corriendo = False
                 return
 
             # 4. Ajustar el turno para el siguiente sobreviviente
             self.turno_actual %= len(self.jugadores)
-            print(f"DEBUG: {nombre_reprobado} eliminado. El semestre continúa.")
+            print(f"DEBUG: {nombre_reprobado} eliminado por BORIS.")
             return
     
         # 5. COMPROBACIÓN DE VICTORIA
         if jugador.vueltas >= 1:
-            print(f"¡FELICIDADES {jugador.nombre.upper()}! HAS PASADO EL SEMESTRE.")
-            print("🏆"*20)
+            print(f"¡FELICIDADES {jugador.nombre.upper()}! SOBREVIVISTE A BORIS Y GANASTE EL JUEGO!")
             
             # Dibujar pantalla de victoria
-            pantalla.fill((255, 255, 255))
-            fuente_vic = pygame.font.SysFont("Arial", 50, bold=True)
-            txt = fuente_vic.render(f"¡GANADOR: {jugador.nombre}!", True, (0, 150, 0))
-            pantalla.blit(txt, (ANCHO//2 - txt.get_width()//2, ALTO//2 - 50))
+            self.pantalla.fill(BLANCO)
+            #PILAS fuente_vic = pygame.font.SysFont("Arial", 50, bold=True)
+            txt = self.fuente_gigante.render(f"¡GANADOR: {jugador.nombre}!", True, COLOR_BOTON_JUGAR)
+            self.pantalla.blit(txt, (ANCHO//2 - txt.get_width()//2, ALTO//2 - 50))
             pygame.display.flip()
             
             time.sleep(5) # Pausa para ver el resultado
@@ -353,7 +405,7 @@ class JuegoGrafico:
             return 
 
         # 5. CAMBIAR TURNO (Solo si nadie ha ganado aún)
-        self.turno_actual = (self.turno_actual + 1) % len(self.jugadores)
+        self.turno_actual = (self.turno_actual + 1) % len(self.jugadores) 
 
     def correr(self):
         self.mostrar_pantalla_inicio()
@@ -368,19 +420,13 @@ class JuegoGrafico:
                     if evento.key == pygame.K_SPACE:
                         self.mover_jugador() 
 
-            # 2. DIBUJAR TODO
-            self.pantalla.fill(COLOR_FONDO) 
-            self.dibujar_tablero()
-            self.dibujar_jugadores()
-            self.dibujar_interfaz()
-            
-            # 3. ACTUALIZAR PANTALLA
-            pygame.display.flip()
+            self.actualizar_pantalla_completa()
             
             # 4. CONTROL DE VELOCIDAD
-            pygame.time.Clock().tick(30) 
+            self.reloj.tick(FPS)
 
         pygame.quit()
+        sys.exit()
 
 if __name__ == "__main__":
     juego = JuegoGrafico()

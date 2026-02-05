@@ -1,8 +1,9 @@
 import pygame
 import random
 import sys
+from constantes import *
 
-# Mantenemos tu Nodo de Árbol (Requisito: Árboles)
+# Requisito: Árboles
 class NodoPregunta:
     def __init__(self, pregunta, respuesta_correcta):
         self.pregunta = pregunta
@@ -11,18 +12,21 @@ class NodoPregunta:
         self.izquierda = None 
 
 class Minijuegos:
-    def __init__(self):
+    def __init__(self, img_evil_boris=None, img_good_boris=None, sonido_error=None):
         self.raiz_trivia = self._generar_arbol_trivia()
-        self.archivo_log = "historial_minijuegos.txt"
+        self.archivo_log = ARCHIVO_LOG_MINIJUEGOS
         self.fuente = pygame.font.SysFont("Arial", 22, bold=True)
+        self.img_evil_boris = img_evil_boris
+        self.img_good_boris = img_good_boris
+        self.sonido_error = sonido_error
 
     def _generar_arbol_trivia(self):
         """Genera árboles de decisión con preguntas técnicas de Estructuras de Datos"""
         
         # --- OPCIÓN A: Enfoque en ÁRBOLES BINARIOS ---
-        raiz_a = NodoPregunta("¿Un arbol binario puede tener maximo 2 hijos?", "s")
+        raiz_a = NodoPregunta("¿Un árbol binario puede tener máximo 2 hijos?", "s")
         raiz_a.derecha = NodoPregunta("¿El nodo sin hijos se llama 'hoja'?", "s")
-        raiz_a.izquierda = NodoPregunta("¿La 'raiz' es el nodo final del arbol?", "n")
+        raiz_a.izquierda = NodoPregunta("¿La 'raíz' es el nodo final del árbol?", "n")
 
         # --- OPCIÓN B: Enfoque en GRAFOS ---
         raiz_b = NodoPregunta("¿Los grafos pueden tener ciclos?", "s")
@@ -30,12 +34,12 @@ class Minijuegos:
         raiz_b.izquierda = NodoPregunta("¿Un grafo solo puede tener 5 nodos?", "n")
 
         # --- OPCIÓN C: Recorridos y Propiedades ---
-        raiz_c = NodoPregunta("¿El recorrido In-orden se usa en arboles?", "s")
+        raiz_c = NodoPregunta("¿El recorrido In-orden se usa en árboles?", "s")
         raiz_c.derecha = NodoPregunta("¿Un grafo no dirigido usa matrices de adyacencia?", "s")
-        raiz_c.izquierda = NodoPregunta("¿En un arbol binario, el hijo izquierdo es mayor que el padre?", "n")
+        raiz_c.izquierda = NodoPregunta("¿En un árbol binario, el hijo izquierdo es mayor que el padre?", "n")
 
         # --- OPCIÓN D: Terminología Avanzada ---
-        raiz_d = NodoPregunta("¿Un arbol es un tipo especial de grafo?", "s")
+        raiz_d = NodoPregunta("¿Un árbol es un tipo especial de grafo?", "s")
         raiz_d.derecha = NodoPregunta("¿Un grafo completo conecta todos sus nodos entre si?", "s")
         raiz_d.izquierda = NodoPregunta("¿El grado de un nodo es siempre cero?", "n")
 
@@ -54,40 +58,35 @@ class Minijuegos:
 
     def lanzar_dado(self, jugador, pantalla):
         # Configuraciones de la ventana y botón
-        rect_ventana = pygame.Rect(150, 150, 700, 500) 
-        botón_rect = pygame.Rect(400, 450, 200, 60)
+        rect_ventana = pygame.Rect(RECT_VENTANA_MODAL) 
+        botón_rect = pygame.Rect(RECT_BOTON_DADO)
         esperando_clic = True
         
-        # Colores
-        AZUL_NORMAL = (59, 130, 246)
-        AZUL_HOVER = (37, 99, 235) # Un azul más oscuro para el hover
-        DORADO = (245, 158, 11)
-
         while esperando_clic:
             # 1. CAPTURAR POSICIÓN DEL MOUSE PARA El BOTÓN
             mouse_pos = pygame.mouse.get_pos()
-            color_boton = AZUL_HOVER if botón_rect.collidepoint(mouse_pos) else AZUL_NORMAL
+            color_boton = AZUL_HOVER if botón_rect.collidepoint(mouse_pos) else AZUL_BOTON
 
             # 2. DIBUJAR UNA SOLA VEZ 
             # Fondo oscuro semitransparente (solo una vez por frame)
-            overlay = pygame.Surface((1000, 800), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 180))
+            overlay = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+            overlay.fill(COLOR_OVERLAY)
             pantalla.blit(overlay, (0, 0))
 
             # Dibujar el cuadro grande de la ventana
-            pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-            pygame.draw.rect(pantalla, DORADO, rect_ventana, 6, border_radius=20)
+            pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+            pygame.draw.rect(pantalla, DORADO_CASILLA, rect_ventana, 6, border_radius=20)
 
             # Título y Mensaje
-            titulo = self.fuente.render(" EXAMEN DE SUERTE: EL DADO", True, (30, 41, 59))
-            instruccion = self.fuente.render("¡Presiona el botón para lanzar tu destino!", True, (71, 85, 105))
+            titulo = self.fuente.render(" PRUEBA SORPRESA: EL DADO", True, COLOR_TEXTO)
+            instruccion = self.fuente.render("Lanza el dado. Boris no tendrá piedad", True, GRIS_TEXTO_CLARO)
             
             pantalla.blit(titulo, (rect_ventana.centerx - titulo.get_width()//2, rect_ventana.y + 60))
             pantalla.blit(instruccion, (rect_ventana.centerx - instruccion.get_width()//2, rect_ventana.y + 150))
 
             # Dibujar el Botón con efecto Hover (Para que sea de otro color el botón si se pasa el ratón por ahí)
             pygame.draw.rect(pantalla, color_boton, botón_rect, border_radius=12)
-            txt_boton = self.fuente.render("GIRAR DADO", True, (255, 255, 255))
+            txt_boton = self.fuente.render("GIRAR DADO", True, BLANCO)
             pantalla.blit(txt_boton, (botón_rect.centerx - txt_boton.get_width()//2, botón_rect.centery - txt_boton.get_height()//2))
 
             pygame.display.flip()
@@ -105,11 +104,11 @@ class Minijuegos:
         for i in range(15): # Más pasos de animación
             num_temp = random.randint(1, 8)
             # Reutilizamos el dibujo para que no parpadee
-            pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-            pygame.draw.rect(pantalla, DORADO, rect_ventana, 6, border_radius=20)
+            pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+            pygame.draw.rect(pantalla, DORADO_CASILLA, rect_ventana, 6, border_radius=20)
             
             # Texto de "Lanzando"
-            txt_anim = self.fuente.render(f" Lanzando... {num_temp}", True, DORADO)
+            txt_anim = self.fuente.render(f" Lanzando... {num_temp}", True, DORADO_CASILLA)
             pantalla.blit(txt_anim, (rect_ventana.centerx - txt_anim.get_width()//2, rect_ventana.centery - 20))
             
             pygame.display.flip()
@@ -122,14 +121,27 @@ class Minijuegos:
         jugador.modificar_vida(puntos)
 
         # Limpiar y mostrar resultado
-        pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-        pygame.draw.rect(pantalla, DORADO, rect_ventana, 6, border_radius=20)
+        pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+        pygame.draw.rect(pantalla, DORADO_CASILLA, rect_ventana, 6, border_radius=20)
         
-        res_txt = self.fuente.render(f"¡SALIÓ UN {dado_final}!", True, (30, 41, 59))
-        sub_txt = self.fuente.render(f"{'¡APROBASTE!' if ganó else '¡REPROBASTE!'} ({puntos} pts)", True, (16, 185, 129) if ganó else (239, 68, 68))
+        imagen_mostrar = None
+        if ganó and self.img_good_boris:
+            imagen_mostrar = self.img_good_boris
+        elif not ganó and self.img_evil_boris:
+            imagen_mostrar = self.img_evil_boris
+            if self.sonido_error:
+                self.sonido_error.play()
+
+        if imagen_mostrar:
+            img_x = rect_ventana.centerx - imagen_mostrar.get_width() // 2
+            img_y = rect_ventana.centery - 175 
+            pantalla.blit(imagen_mostrar, (img_x, img_y))
         
-        pantalla.blit(res_txt, (rect_ventana.centerx - res_txt.get_width()//2, rect_ventana.centery - 40))
-        pantalla.blit(sub_txt, (rect_ventana.centerx - sub_txt.get_width()//2, rect_ventana.centery + 30))
+        res_txt = self.fuente.render(f"¡SALIÓ UN {dado_final}!", True, COLOR_TEXTO)
+        sub_txt = self.fuente.render(f"{'¡APROBASTE!' if ganó else '¡REPROBASTE!'} ({puntos} pts)", True, VERDE_EXITO if ganó else ROJO_ERROR)
+        
+        pantalla.blit(res_txt, (rect_ventana.centerx - res_txt.get_width()//2, rect_ventana.centery + 20))
+        pantalla.blit(sub_txt, (rect_ventana.centerx - sub_txt.get_width()//2, rect_ventana.centery + 60))
         
         pygame.display.flip()
         self.guardar_resultado(jugador, "Dado", "Gano" if ganó else "Perdio")
@@ -143,26 +155,20 @@ class Minijuegos:
         actual = self.raiz_trivia
         aciertos = 0
 
-        rect_ventana = pygame.Rect(150, 150, 700, 500)
-        
-        # Colores temáticos
-        GRIS_OSCURO = (30, 41, 59)
-        VERDE_EXITO = (16, 185, 129)
-        ROJO_ERROR = (239, 68, 68)
-        DORADO = (245, 158, 11)
+        rect_ventana = pygame.Rect(RECT_VENTANA_MODAL)
 
         while actual:
             # 1. DIBUJAR INTERFAZ DE PREGUNTA
-            overlay = pygame.Surface((1000, 800), pygame.SRCALPHA)
-            overlay.fill((0, 0, 0, 180))
+            overlay = pygame.Surface((ANCHO, ALTO), pygame.SRCALPHA)
+            overlay.fill(COLOR_OVERLAY)
             pantalla.blit(overlay, (0, 0))
 
-            pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-            pygame.draw.rect(pantalla, DORADO, rect_ventana, 6, border_radius=20)
+            pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+            pygame.draw.rect(pantalla, DORADO_CASILLA, rect_ventana, 6, border_radius=20)
 
             # Textos: Encabezado y Pregunta
-            titulo = self.fuente.render(f"EXAMEN TEÓRICO (Aciertos: {aciertos})", True, DORADO)
-            pregunta_txt = self.fuente.render(actual.pregunta, True, GRIS_OSCURO)
+            titulo = self.fuente.render(f"EXAMEN TEÓRICO (Aciertos: {aciertos})", True, DORADO_CASILLA)
+            pregunta_txt = self.fuente.render(actual.pregunta, True, COLOR_TEXTO)
             
             pantalla.blit(titulo, (rect_ventana.centerx - titulo.get_width()//2, rect_ventana.y + 50))
             pantalla.blit(pregunta_txt, (rect_ventana.centerx - pregunta_txt.get_width()//2, rect_ventana.centery - 20))
@@ -213,14 +219,27 @@ class Minijuegos:
         jugador.modificar_vida(puntos)
         
         # Limpiar cuadro para el final
-        pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-        pygame.draw.rect(pantalla, DORADO, rect_ventana, 6, border_radius=20)
+        pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+        pygame.draw.rect(pantalla, DORADO_CASILLA, rect_ventana, 6, border_radius=20)
         
-        fin_txt = self.fuente.render("EXAMEN FINALIZADO", True, GRIS_OSCURO)
+        imagen_mostrar = None
+        if aciertos == 0 and self.img_evil_boris:
+            imagen_mostrar = self.img_evil_boris
+            if self.sonido_error:
+                self.sonido_error.play()
+        elif aciertos > 0 and self.img_good_boris:
+            imagen_mostrar = self.img_good_boris
+            
+        if imagen_mostrar:
+            img_x = rect_ventana.centerx - imagen_mostrar.get_width() // 2
+            img_y = rect_ventana.centery - 175 
+            pantalla.blit(imagen_mostrar, (img_x, img_y))
+
+        fin_txt = self.fuente.render("EXAMEN FINALIZADO", True, COLOR_TEXTO)
         puntos_txt = self.fuente.render(f"Puntaje obtenido: +{puntos} de promedio", True, VERDE_EXITO)
         
-        pantalla.blit(fin_txt, (rect_ventana.centerx - fin_txt.get_width()//2, rect_ventana.centery - 40))
-        pantalla.blit(puntos_txt, (rect_ventana.centerx - puntos_txt.get_width()//2, rect_ventana.centery + 20))
+        pantalla.blit(fin_txt, (rect_ventana.centerx - fin_txt.get_width()//2, rect_ventana.centery + 20))
+        pantalla.blit(puntos_txt, (rect_ventana.centerx - puntos_txt.get_width()//2, rect_ventana.centery + 60))
         
         pygame.display.flip()
         self.guardar_resultado(jugador, "Trivia", f"{aciertos} aciertos")
@@ -231,7 +250,7 @@ class Minijuegos:
     def reto_peligro(self, jugador, pantalla):
         """Reto de alta dificultad enfocado 100% en MST (Prim y Kruskal)"""
         # Esta línea DEBE tener 8 espacios (o 2 tabs) desde el borde izquierdo
-        rect_ventana = pygame.Rect(150, 150, 700, 500)
+        rect_ventana = pygame.Rect(RECT_VENTANA_MODAL)
         
         # BANCO DE PREGUNTAS TÉCNICAS
         retos = [
@@ -252,13 +271,13 @@ class Minijuegos:
         # 2. Bucle de respuesta
         esperando = True
         while esperando:
-            pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-            pygame.draw.rect(pantalla, (220, 38, 38), rect_ventana, 6, border_radius=20)
+            pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+            pygame.draw.rect(pantalla, ROJO_PELIGRO, rect_ventana, 6, border_radius=20)
             
-            txt_pregunta = self.fuente.render(pregunta, True, (30, 41, 59))
+            txt_pregunta = self.fuente.render(pregunta, True, COLOR_TEXTO)
             pantalla.blit(txt_pregunta, (rect_ventana.centerx - txt_pregunta.get_width()//2, rect_ventana.centery - 20))
             
-            instrucciones = self.fuente.render("[S] para VERDADERO | [N] para FALSO", True, (100, 100, 100))
+            instrucciones = self.fuente.render("[S] para VERDADERO | [N] para FALSO", True, GRIS_TEXTO_SECUNDARIO)
             pantalla.blit(instrucciones, (rect_ventana.centerx - instrucciones.get_width()//2, rect_ventana.y + 350))
             
             pygame.display.flip()
@@ -276,30 +295,43 @@ class Minijuegos:
 
                     if res_usuario != "":
                         if res_usuario == respuesta_correcta:
-                            self.dibujar_ventana_emergente(pantalla, "¡EXPERTO EN GRAFOS!", "Has dominado el algoritmo.")
+                            self.dibujar_ventana_emergente(pantalla, "Respuesta Correcta", "Boris te felicita", imagen=self.img_good_boris)
                         else:
                             jugador.modificar_vida(-25)
-                            self.dibujar_ventana_emergente(pantalla, "¡FALLASTE", "Te confundiste de algoritmo: -25 pts.")
+                            self.dibujar_ventana_emergente(pantalla, "Respuesta Incorrecta", "Boris te hace bailar: -25 pts.", imagen=self.img_evil_boris)
+                            if self.sonido_error:
+                                self.sonido_error.play()
                         
                         pygame.display.flip()
                         self.guardar_resultado(jugador, "Reto Peligro", "Aprobo" if res_usuario == respuesta_correcta else "Reprobo")
                         pygame.time.delay(2500)
                         esperando = False
 
-    def dibujar_ventana_emergente(self, pantalla, titulo, subtitulo):
+    def dibujar_ventana_emergente(self, pantalla, titulo, subtitulo, imagen=None):
         # 1. Definir el área
-        rect_ventana = pygame.Rect(150, 150, 700, 500)
+        rect_ventana = pygame.Rect(RECT_VENTANA_MODAL)
         
         # 2. Dibujar fondo blanco y borde oscuro
-        pygame.draw.rect(pantalla, (255, 255, 255), rect_ventana, border_radius=20)
-        pygame.draw.rect(pantalla, (30, 41, 59), rect_ventana, 6, border_radius=20)
+        pygame.draw.rect(pantalla, BLANCO, rect_ventana, border_radius=20)
+        pygame.draw.rect(pantalla, COLOR_TEXTO, rect_ventana, 6, border_radius=20)
 
         # 3. Renderizar y centrar el Título
-        txt_titulo = self.fuente.render(titulo, True, (30, 41, 59))
+        txt_titulo = self.fuente.render(titulo, True, COLOR_TEXTO)
         pantalla.blit(txt_titulo, (rect_ventana.centerx - txt_titulo.get_width()//2, rect_ventana.y + 80))
 
+        if imagen:
+             # La ponemos centrada, desplazada un poco hacia arriba del centro
+            img_x = rect_ventana.centerx - imagen.get_width() // 2
+            img_y = rect_ventana.centery - 120 
+            pantalla.blit(imagen, (img_x, img_y))
+            
+            # Si hay imagen, bajamos un poco el subtítulo
+            pos_y_sub = rect_ventana.centery + 80
+        else:
+            pos_y_sub = rect_ventana.centery
+
         # 4. Renderizar y centrar el Subtítulo (Pregunta o descripción)
-        txt_sub = self.fuente.render(subtitulo, True, (70, 70, 70))
-        pantalla.blit(txt_sub, (rect_ventana.centerx - txt_sub.get_width()//2, rect_ventana.centery))
+        txt_sub = self.fuente.render(subtitulo, True, GRIS_TEXTO_INFO)
+        pantalla.blit(txt_sub, (rect_ventana.centerx - txt_sub.get_width()//2, pos_y_sub))
         
         pygame.display.flip()
