@@ -27,6 +27,16 @@ class JuegoGrafico:
         self.img_evil_boris = None
         self.img_good_boris = None
         
+        self.fondo_victoria = None 
+        try:
+            print("Cargando fondo de victoria...")
+            # Usamos .convert() porque los fondos usualmente no necesitan transparencia
+            img_temp = pygame.image.load(RUTA_FONDO_VICTORIA).convert()
+            # Escalamos la imagen para que cubra exactamente toda la pantalla (ANCHO y ALTO están en constantes)
+            self.fondo_victoria = pygame.transform.scale(img_temp, (ANCHO, ALTO))
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo cargar la imagen de victoria. Se usará color sólido. Error: {e}")
+        
         try:
             print("Cargando música de fondo...")
             pygame.mixer.music.load(RUTA_MUSICA)       # 1. Cargar el archivo
@@ -134,7 +144,6 @@ class JuegoGrafico:
             pygame.display.flip()
 
     def generar_mapa_cuadrado(self):
-        # margen_x, margen_y = 150, 150
         ancho_util = ANCHO - (MARGEN_X * 2)
         alto_util = ALTO - 350
         
@@ -391,12 +400,16 @@ class JuegoGrafico:
     
         # 5. COMPROBACIÓN DE VICTORIA
         if jugador.vueltas >= 1:
-            print(f"¡FELICIDADES {jugador.nombre.upper()}! SOBREVIVISTE A BORIS Y GANASTE EL JUEGO!")
+            print(f"{jugador.nombre.upper()} ¡SOBREVIVISTE A BORIS Y PASASTE EDA!")
             
-            # Dibujar pantalla de victoria
-            self.pantalla.fill(BLANCO)
-            #PILAS fuente_vic = pygame.font.SysFont("Arial", 50, bold=True)
-            txt = self.fuente_gigante.render(f"¡GANADOR: {jugador.nombre}!", True, COLOR_BOTON_JUGAR)
+            if self.fondo_victoria:
+                # Si la imagen cargó correctamente, la dibujamos en (0,0)
+                self.pantalla.blit(self.fondo_victoria, (0, 0))
+            else:
+                #Si falló la carga de la imagen, usamos el fondo blanco clásico
+                self.pantalla.fill(BLANCO)
+            
+            txt = self.fuente_gigante.render(f"¡GANADOR: {jugador.nombre}!", True, GRIS_TEXTO_CLARO)
             self.pantalla.blit(txt, (ANCHO//2 - txt.get_width()//2, ALTO//2 - 50))
             pygame.display.flip()
             

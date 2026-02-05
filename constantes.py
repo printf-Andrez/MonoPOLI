@@ -48,6 +48,7 @@ RUTA_EVIL_BORIS = "evilBoris.png"
 RUTA_GOOD_BORIS = "goodBoris.png"
 RUTA_MUSICA = "soundtrack.mp3"
 RUTA_SONIDO_ERROR = "error.mp3"
+RUTA_FONDO_VICTORIA = "victoria_fondo.jpg"
 
 # --- CONSTANTES DE MINIJUEGOS  ---
 ARCHIVO_LOG_MINIJUEGOS = "historial_minijuegos.txt"

@@ -3,7 +3,7 @@ import random
 import sys
 from constantes import *
 
-# Requisito: Árboles
+# Árboles:
 class NodoPregunta:
     def __init__(self, pregunta, respuesta_correcta):
         self.pregunta = pregunta
@@ -258,13 +258,13 @@ class Minijuegos:
             ("¿Kruskal selecciona aristas de menor peso sin formar ciclos?", "s"),
             ("¿Prim es generalmente mejor que Kruskal en grafos densos?", "s"),
             ("¿Prim utiliza una estructura Union-Find para detectar ciclos?", "s"),
-            ("¿El algoritmo Prim es mejor para grafos dispersos (pocas aristas)?.", "n")
+            ("¿El algoritmo Prim es mejor en grafos con pocas aristas?.", "n")
         ]
         
         pregunta, respuesta_correcta = random.choice(retos)
 
         # 1. Pantalla de Advertencia
-        self.dibujar_ventana_emergente(pantalla, " ¡RETO DE ALGORITMOS!", "Si fallas, pierdes 25 pts de promedio.")
+        self.dibujar_ventana_emergente(pantalla, " Examen Bimestral", "Si fallas, pierdes 25 pts de promedio.")
         pygame.display.flip()
         pygame.time.delay(2000)
 
