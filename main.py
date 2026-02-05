@@ -409,7 +409,7 @@ class JuegoGrafico:
                 #Si falló la carga de la imagen, usamos el fondo blanco clásico
                 self.pantalla.fill(BLANCO)
             
-            txt = self.fuente_gigante.render(f"¡GANADOR: {jugador.nombre}!", True, GRIS_TEXTO_CLARO)
+            txt = self.fuente_gigante.render(f"¡GANADOR: {jugador.nombre}!", True, BLANCO)
             self.pantalla.blit(txt, (ANCHO//2 - txt.get_width()//2, ALTO//2 - 50))
             pygame.display.flip()
             

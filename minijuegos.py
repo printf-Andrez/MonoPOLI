@@ -138,7 +138,7 @@ class Minijuegos:
             pantalla.blit(imagen_mostrar, (img_x, img_y))
         
         res_txt = self.fuente.render(f"¡SALIÓ UN {dado_final}!", True, COLOR_TEXTO)
-        sub_txt = self.fuente.render(f"{'¡APROBASTE!' if ganó else '¡REPROBASTE!'} ({puntos} pts)", True, VERDE_EXITO if ganó else ROJO_ERROR)
+        sub_txt = self.fuente.render(f"{'BORIS te da pizza' if ganó else 'BORIS te hace contar un chiste'} ({puntos} pts)", True, VERDE_EXITO if ganó else ROJO_ERROR)
         
         pantalla.blit(res_txt, (rect_ventana.centerx - res_txt.get_width()//2, rect_ventana.centery + 20))
         pantalla.blit(sub_txt, (rect_ventana.centerx - sub_txt.get_width()//2, rect_ventana.centery + 60))
